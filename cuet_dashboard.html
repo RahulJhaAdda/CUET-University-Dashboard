@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUET University — Intelligence Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --accent5: #00c6ff;
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --tag-bg: rgba(108,99,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a30 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-inner {
+    max-width: 1400px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 20px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .logo span { font-size: 12px; font-weight: 400; color: var(--muted); display: block; }
+
+  /* ─── TABS ─── */
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border-radius: 12px; padding: 4px;
+  }
+  .tab {
+    padding: 8px 20px; border-radius: 8px;
+    border: none; background: transparent;
+    color: var(--muted); font-family: 'DM Sans'; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:hover:not(.active) { color: var(--text); background: var(--border); }
+
+  /* ─── MAIN LAYOUT ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .container {
+    max-width: 1400px; margin: 0 auto; padding: 32px;
+  }
+
+  /* ─── FILTERS PANEL ─── */
+  .filters-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    gap: 16px; align-items: end;
+  }
+  .filter-group label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .filter-group select,
+  .filter-group input {
+    width: 100%; padding: 10px 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'DM Sans'; font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none; appearance: none;
+    cursor: pointer;
+  }
+  .filter-group select:focus,
+  .filter-group input:focus { border-color: var(--accent); }
+  .filter-group input::placeholder { color: var(--muted); }
+
+  .btn-reset {
+    padding: 10px 20px; background: var(--border);
+    border: none; border-radius: 10px; color: var(--muted);
+    font-family: 'DM Sans'; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-reset:hover { background: var(--accent); color: #fff; }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    display: flex; gap: 16px; margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 20px;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 140px;
+  }
+  .stat-chip .icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .stat-chip .val { font-size: 22px; font-weight: 700; font-family: 'Syne'; }
+  .stat-chip .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* ─── RESULTS GRID ─── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+  }
+
+  .course-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    transition: all 0.25s; position: relative; overflow: hidden;
+  }
+  .course-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  .course-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(108,99,255,0.15);
+  }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px; }
+  .uni-badge {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+  }
+  .degree-type {
+    font-size: 11px; color: var(--muted); background: var(--surface);
+    padding: 3px 10px; border-radius: 6px; font-weight: 500;
+  }
+
+  .course-name {
+    font-family: 'Syne'; font-weight: 700; font-size: 15px;
+    margin-bottom: 8px; line-height: 1.3;
+  }
+
+  .subject-combo {
+    margin-bottom: 12px;
+  }
+  .combo-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .combo-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .combo-tag {
+    font-size: 11px; padding: 3px 10px;
+    background: var(--tag-bg); border: 1px solid rgba(108,99,255,0.25);
+    border-radius: 20px; color: #b0aaff;
+  }
+
+  .eligibility-box {
+    background: var(--surface); border-radius: 10px; padding: 12px;
+    font-size: 12px; line-height: 1.6; color: #c0c0d8;
+    max-height: 80px; overflow: hidden; position: relative;
+    transition: max-height 0.3s;
+  }
+  .eligibility-box.expanded { max-height: 500px; }
+  .eligibility-box::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 30px;
+    background: linear-gradient(transparent, var(--surface));
+    pointer-events: none; transition: opacity 0.3s;
+  }
+  .eligibility-box.expanded::after { opacity: 0; }
+  .expand-btn {
+    display: inline-block; margin-top: 6px;
+    font-size: 11px; color: var(--accent); cursor: pointer;
+    font-weight: 500; background: none; border: none; padding: 0;
+  }
+  .expand-btn:hover { text-decoration: underline; }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center; padding: 80px 20px;
+    color: var(--muted);
+  }
+  .no-results h3 { font-family: 'Syne'; font-size: 24px; margin-bottom: 8px; }
+
+  /* ─── FAQ PAGE ─── */
+  .faq-filters {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 16px; align-items: end;
+  }
+
+  .faq-grid { display: flex; flex-direction: column; gap: 12px; }
+
+  .faq-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    transition: all 0.2s;
+  }
+  .faq-card:hover { border-color: var(--accent); }
+
+  .faq-question {
+    padding: 18px 20px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px;
+  }
+  .faq-q-text { font-weight: 600; font-size: 14px; line-height: 1.4; flex: 1; }
+  .faq-cat {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; padding: 3px 10px; border-radius: 6px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .faq-chevron {
+    flex-shrink: 0; color: var(--muted); font-size: 18px;
+    transition: transform 0.3s;
+  }
+  .faq-card.open .faq-chevron { transform: rotate(180deg); }
+  .faq-answer {
+    display: none; padding: 0 20px 18px;
+    font-size: 13px; line-height: 1.7; color: #c0c0d8;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .faq-card.open .faq-answer { display: block; }
+
+  .faq-no-results {
+    text-align: center; padding: 60px; color: var(--muted);
+  }
+
+  /* ─── UNI COLOR THEMES ─── */
+  .uni-JNU::before { background: var(--accent); }
+  .uni-JMI::before { background: var(--accent2); }
+  .uni-BHU::before { background: var(--accent3); }
+  .uni-AMU::before { background: var(--accent4); }
+  .uni-DU::before  { background: var(--accent5); }
+
+  .badge-JNU { background: rgba(108,99,255,0.15); color: #a09aff; }
+  .badge-JMI { background: rgba(255,101,132,0.15); color: #ff9aaa; }
+  .badge-BHU { background: rgba(67,233,123,0.15); color: #6ef99d; }
+  .badge-AMU { background: rgba(247,151,30,0.15); color: #ffb85c; }
+  .badge-DU  { background: rgba(0,198,255,0.15); color: #6adeff; }
+
+  .cat-general    { background: rgba(108,99,255,0.15); color: #a09aff; }
+  .cat-eligibility{ background: rgba(67,233,123,0.15); color: #6ef99d; }
+  .cat-cuet       { background: rgba(0,198,255,0.15); color: #6adeff; }
+  .cat-admission  { background: rgba(247,151,30,0.15); color: #ffb85c; }
+  .cat-reservation{ background: rgba(255,101,132,0.15); color: #ff9aaa; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .filters-panel, .faq-filters {
+      grid-template-columns: 1fr 1fr;
+    }
+    .results-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .filters-panel, .faq-filters { grid-template-columns: 1fr; }
+    .container { padding: 16px; }
+    .header-inner { padding: 0; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .highlight { background: rgba(108,99,255,0.3); border-radius: 3px; padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo" style="-webkit-text-fill-color:unset; background:none; display:flex; align-items:center; gap:14px;">
+      <svg width="133" height="19" viewBox="0 0 178 25" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <g clip-path="url(#clip0_2610_4067)">
+          <path d="M13.6437 24.4525H6.46101C2.16512 24.4525 0 22.3596 0 18.2413V6.96652C0 2.84822 2.13076 0.789062 6.28917 0.789062H13.575V5.04241H6.28917C4.94886 5.04241 4.26152 5.68379 4.26152 6.96652V18.2076C4.26152 19.5241 4.98322 20.1992 6.32354 20.1992H13.6437V24.4525Z" fill="#ffffff"/>
+          <path d="M29.9935 24.4529H20.4394C17.4151 24.4529 15.9717 22.8663 15.9717 19.7607V18.0729C15.9717 15.3723 17.4495 14.0221 20.4738 14.0221H26.0756V13.0432C26.0756 11.8279 25.5601 11.254 24.426 11.254H17.0371V7.13574H24.426C28.1377 7.13574 29.9935 9.05987 29.9935 12.9081V24.4529ZM26.0756 20.6384V17.1277H21.0237C20.1989 17.1277 19.7865 17.5665 19.7865 18.4442V19.4569C19.7865 20.2333 20.1645 20.6384 21.0237 20.6384H26.0756Z" fill="#ffffff"/>
+          <path d="M36.8825 24.4529H32.8271V7.13574H36.745V9.02606C37.5698 7.54077 38.4977 7.13574 40.4223 7.13574H43.1716V11.254H38.4977C37.3636 11.254 36.8825 11.8279 36.8825 13.0769V24.4529Z" fill="#ffffff"/>
+          <path d="M58.2091 24.4529H50.3391C46.5931 24.4529 44.7373 22.5288 44.7373 18.6805V12.9081C44.7373 9.05987 46.5931 7.13574 50.3391 7.13574H53.0885C56.8345 7.13574 58.6903 9.05987 58.6903 12.9081V17.364H48.7239V18.5792C48.7239 19.7607 49.2394 20.3683 50.3391 20.3683H58.2091V24.4529ZM54.8069 14.2246V12.8068C54.8069 11.5916 54.257 10.984 53.1572 10.984H50.3391C49.2394 10.984 48.7239 11.5916 48.7239 12.8068V14.2246H54.8069Z" fill="#ffffff"/>
+          <path d="M74.7551 24.4529H66.885C63.139 24.4529 61.2832 22.5288 61.2832 18.6805V12.9081C61.2832 9.05987 63.139 7.13574 66.885 7.13574H69.6345C73.3804 7.13574 75.2359 9.05987 75.2359 12.9081V17.364H65.2697V18.5792C65.2697 19.7607 65.7855 20.3683 66.885 20.3683H74.7551V24.4529ZM71.3527 14.2246V12.8068C71.3527 11.5916 70.803 10.984 69.7028 10.984H66.885C65.7855 10.984 65.2697 11.5916 65.2697 12.8068V14.2246H71.3527Z" fill="#ffffff"/>
+          <path d="M82.0562 24.4529H78.001V7.13574H81.9183V9.02606C82.7433 7.54077 83.6714 7.13574 85.5959 7.13574H88.3453V11.254H83.6714C82.537 11.254 82.0562 11.8279 82.0562 13.0769V24.4529Z" fill="#ffffff"/>
+          <path d="M98.9157 24.4529H90.015V20.3683H98.7784C99.6717 20.3683 100.084 19.9295 100.084 19.1531V18.5455C100.084 17.7691 99.6375 17.3303 98.7784 17.3303H94.7231C91.3208 17.3303 89.5684 16.0475 89.5684 13.1444V12.1992C89.5684 8.65477 91.3208 7.13574 94.8263 7.13574H103.143V11.254H94.6542C93.864 11.254 93.4174 11.6254 93.4174 12.4693V12.7731C93.4174 13.617 93.864 14.0896 94.7573 14.0896H98.9157C102.215 14.0896 104.002 15.3723 104.002 18.2079V19.3219C104.002 22.7651 102.353 24.4529 98.9157 24.4529Z" fill="#ffffff"/>
+          <path d="M136.758 24.4526C132.978 24.4526 131.088 22.5047 131.088 18.6094V12.7666C131.088 8.87129 132.978 6.92368 136.758 6.92368H141.037V0.5H145.177V24.4521H136.758V24.4526ZM141.037 11.0926H136.898C135.784 11.0926 135.228 11.6962 135.228 12.9035V18.507C135.228 19.7143 135.785 20.3179 136.898 20.3179H141.037V11.0924V11.0926ZM153.191 24.4526C149.411 24.4526 147.521 22.5047 147.521 18.6094V12.7666C147.521 8.87129 149.411 6.92368 153.191 6.92368H157.47V0.5H161.61V24.4521H153.191V24.4526ZM157.47 11.0926H153.331C152.217 11.0926 151.661 11.6962 151.661 12.9035V18.507C151.661 19.7143 152.218 20.3179 153.331 20.3179H157.47V11.0924V11.0926ZM168.303 24.4526C165.288 24.4526 163.781 22.8696 163.781 19.7031V17.9946C163.781 15.261 165.299 13.8942 168.337 13.8942H174.008V12.9033C174.008 11.6959 173.451 11.0924 172.338 11.0924H164.859V6.92394H172.338C176.095 6.92394 177.973 8.87155 177.973 12.7668V24.4523H168.302V24.4526H168.303ZM174.008 17.0379H168.894C168.059 17.0379 167.642 17.4821 167.642 18.3703V19.3952C167.642 20.1925 168.059 20.591 168.894 20.591H174.008V17.0374V17.0379Z" fill="#E21221"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M107.878 23.2446C107.878 23.4585 107.942 23.6854 108.069 23.8561L108.134 23.9443C108.205 24.0301 108.282 24.1047 108.37 24.1696C108.399 24.1914 108.429 24.2128 108.462 24.2317L108.559 24.2884C108.657 24.3454 108.781 24.3881 108.896 24.4142C109.231 24.4901 109.521 24.4464 109.832 24.3201L110.538 23.9422C110.562 23.9307 110.576 23.9205 110.601 23.9083C110.885 23.7664 111.165 23.6152 111.451 23.4751L113.062 22.7308L113.901 22.3886C113.995 22.3518 114.094 22.3183 114.186 22.2818L114.473 22.177C114.525 22.1597 114.571 22.1453 114.622 22.1262C114.814 22.0528 115.016 21.9956 115.211 21.9315C115.515 21.8315 115.984 21.7048 116.295 21.633C116.835 21.5081 117.43 21.3923 117.989 21.3496C118.208 21.333 118.426 21.3164 118.647 21.3174C118.69 21.3177 118.708 21.3118 118.743 21.3108C118.815 21.3088 118.862 21.3177 118.931 21.3174L119.857 21.378C120.089 21.4094 120.318 21.4373 120.547 21.4797C120.766 21.5201 120.985 21.5599 121.199 21.6128L121.521 21.6903C121.835 21.7674 122.131 21.8607 122.438 21.9494L122.74 22.0467C122.836 22.082 122.933 22.1113 123.033 22.1459C123.348 22.2542 123.731 22.393 124.032 22.5207L124.451 22.6927C124.498 22.7116 124.542 22.731 124.586 22.7504L125.54 23.1764C125.584 23.194 125.626 23.2196 125.671 23.239C125.719 23.2602 125.76 23.2799 125.806 23.3024L127.05 23.9261C127.078 23.9392 127.093 23.9499 127.117 23.9621C127.16 23.9841 127.199 24.0038 127.244 24.0278C127.268 24.0406 127.28 24.049 127.307 24.0618C127.485 24.1477 127.646 24.257 127.833 24.325C128.15 24.4408 128.584 24.4364 128.886 24.2923C128.972 24.2509 129.056 24.2113 129.134 24.1555C129.332 24.014 129.494 23.8357 129.586 23.61C129.703 23.3253 129.686 23.0545 129.573 22.7739C129.53 22.6661 129.46 22.5261 129.412 22.4126C129.359 22.2884 129.311 22.1704 129.252 22.0495C129.193 21.9292 129.148 21.8032 129.09 21.6818C129.062 21.6203 129.038 21.5633 129.011 21.5004L128.85 21.1378C128.823 21.0739 128.798 21.017 128.77 20.9566C128.742 20.895 128.719 20.8375 128.69 20.775L128.208 19.6818C128.181 19.6203 128.157 19.563 128.129 19.5004L127.647 18.4072C127.592 18.2843 127.539 18.1622 127.485 18.0395L126.683 16.2204C126.53 15.8517 126.353 15.4922 126.199 15.1235C126.149 15.0031 126.09 14.8807 126.04 14.7604C125.862 14.3319 125.657 13.9143 125.478 13.4855C125.299 13.0555 125.094 12.6367 124.915 12.2061L124.593 11.4761C124.566 11.4161 124.539 11.3575 124.512 11.2949L123.951 10.0201C123.898 9.89619 123.844 9.78064 123.791 9.65774L123.067 8.01522C122.908 7.65058 122.751 7.28419 122.585 6.92284L122.021 5.64368C121.888 5.34065 121.75 5.04091 121.622 4.73581L120.898 3.09432C120.686 2.60826 120.475 2.12103 120.256 1.63832C120.161 1.42749 120.122 1.2982 119.994 1.1091C119.882 0.942778 119.724 0.796326 119.546 0.700004C119.375 0.607746 119.198 0.544391 119.003 0.517036C118.603 0.460842 118.19 0.563036 117.869 0.800714C117.842 0.820907 117.821 0.841358 117.795 0.861487C117.741 0.904713 117.711 0.94381 117.663 0.992069C117.643 1.012 117.623 1.03987 117.606 1.06258C117.49 1.21413 117.453 1.32323 117.375 1.49471C117.237 1.79471 117.108 2.10058 116.974 2.40129C116.947 2.46136 116.92 2.52013 116.894 2.58245C116.815 2.76723 116.729 2.94684 116.652 3.13161C116.55 3.37536 116.436 3.61407 116.332 3.85729C116.318 3.88974 116.307 3.91329 116.294 3.946C116.28 3.97916 116.265 4.00884 116.252 4.0382C116.238 4.07116 116.225 4.09878 116.211 4.13149L115.93 4.76878C115.901 4.83291 115.878 4.89013 115.849 4.95478C115.63 5.43749 115.419 5.92503 115.207 6.41078L114.885 7.14058C114.856 7.20316 114.832 7.26116 114.805 7.322C114.778 7.38206 114.751 7.44083 114.725 7.50316L113.841 9.508C113.814 9.57064 113.79 9.62683 113.761 9.68941L113.277 10.7864C113.219 10.9088 113.176 11.0273 113.118 11.1501C113.023 11.3493 112.888 11.6677 112.795 11.8795L112.476 12.606C112.422 12.7294 112.365 12.8508 112.314 12.9727C112.161 13.3399 111.987 13.6989 111.832 14.0653L111.27 15.3399C111.243 15.4035 111.217 15.4608 111.19 15.5211C111.114 15.6915 111.026 15.909 110.948 16.0707L110.788 16.4333C110.659 16.7407 110.517 17.0435 110.384 17.3491C110.199 17.7738 110.006 18.1933 109.824 18.6193C109.616 19.1089 109.386 19.5893 109.181 20.0797C109.155 20.1408 109.124 20.2046 109.099 20.2652C109.072 20.3281 109.045 20.3837 109.019 20.4463C108.967 20.5641 108.915 20.6963 108.859 20.8097L108.619 21.354C108.594 21.4141 108.566 21.4721 108.538 21.5352C108.511 21.6006 108.485 21.656 108.456 21.7209L108.055 22.6332C107.967 22.8399 107.877 22.9875 107.877 23.2446L107.878 23.2441L107.878 23.2446ZM114.701 17.3144C114.701 17.3943 114.725 17.4792 114.772 17.543L114.797 17.5757C114.824 17.6079 114.852 17.6358 114.885 17.6598C114.896 17.6677 114.907 17.6759 114.919 17.6831L114.956 17.7043C114.992 17.7255 115.038 17.7414 115.082 17.7513C115.207 17.7797 115.315 17.7633 115.431 17.7161L115.695 17.575C115.704 17.5706 115.71 17.5668 115.719 17.5624C115.825 17.5096 115.93 17.4531 116.037 17.4004L116.639 17.1224L116.952 16.9944C116.988 16.9806 117.025 16.9684 117.059 16.9546L117.166 16.9152C117.185 16.9088 117.203 16.9035 117.222 16.8961C117.294 16.8687 117.369 16.8473 117.442 16.8232C117.555 16.7859 117.731 16.7386 117.848 16.7118C118.049 16.6651 118.271 16.6216 118.48 16.6058C118.562 16.5997 118.644 16.5933 118.726 16.5938C118.742 16.5938 118.749 16.5917 118.762 16.5912C118.789 16.5904 118.807 16.5938 118.832 16.5935L119.178 16.6163C119.265 16.628 119.35 16.6383 119.436 16.6541C119.518 16.6692 119.6 16.684 119.68 16.7039L119.8 16.7328C119.918 16.7617 120.028 16.7964 120.143 16.8296L120.256 16.8662C120.292 16.8792 120.328 16.8904 120.365 16.9032C120.483 16.9436 120.626 16.9955 120.739 17.0432L120.895 17.1076C120.913 17.1148 120.929 17.1219 120.946 17.1294L121.302 17.2886C121.319 17.2952 121.335 17.3046 121.351 17.3118C121.369 17.3197 121.385 17.3269 121.402 17.3355L121.867 17.5686C121.877 17.5735 121.882 17.5775 121.892 17.5821C121.907 17.5906 121.922 17.5975 121.939 17.6064C121.947 17.611 121.953 17.6143 121.962 17.619C122.029 17.6512 122.089 17.6918 122.159 17.7174C122.277 17.7605 122.439 17.759 122.552 17.7048C122.585 17.6895 122.616 17.6746 122.645 17.6537C122.719 17.601 122.779 17.5344 122.814 17.4501C122.858 17.3437 122.851 17.2423 122.809 17.1378C122.793 17.0974 122.767 17.045 122.749 17.0029C122.729 16.9564 122.711 16.9122 122.689 16.8672C122.667 16.8219 122.65 16.775 122.629 16.7297C122.617 16.7067 122.609 16.6855 122.598 16.662L122.539 16.5263C122.528 16.5026 122.519 16.4811 122.508 16.4586C122.499 16.4356 122.489 16.4141 122.479 16.3906L122.298 15.9821C122.288 15.959 122.279 15.9376 122.269 15.9141L122.089 15.5055C122.068 15.4597 122.049 15.414 122.028 15.3683L121.729 14.6883C121.671 14.5506 121.605 14.4162 121.547 14.2782C121.529 14.2332 121.507 14.1872 121.488 14.1423C121.421 13.9821 121.345 13.8262 121.278 13.6659C121.211 13.505 121.134 13.3483 121.067 13.1879L120.947 12.9152C120.937 12.8927 120.927 12.8708 120.917 12.8475L120.707 12.3712C120.688 12.3247 120.667 12.2817 120.648 12.2357L120.377 11.622C120.318 11.4858 120.259 11.3488 120.197 11.2137L119.986 10.7355C119.936 10.6221 119.884 10.5102 119.836 10.3963L119.566 9.7827C119.487 9.60128 119.408 9.41909 119.326 9.23845C119.291 9.15974 119.276 9.11141 119.228 9.04064C119.187 8.97832 119.128 8.92361 119.061 8.88761C118.997 8.85309 118.931 8.82961 118.858 8.81935C118.708 8.79845 118.554 8.83651 118.433 8.92542C118.424 8.93283 118.416 8.94051 118.406 8.94819C118.386 8.96451 118.375 8.97909 118.357 8.99696C118.349 9.00464 118.342 9.01483 118.336 9.02329C118.292 9.07974 118.278 9.12064 118.249 9.18477C118.198 9.2967 118.15 9.41116 118.099 9.52361C118.089 9.54606 118.079 9.5678 118.07 9.59135C118.04 9.66032 118.008 9.72754 117.979 9.79651C117.941 9.88748 117.898 9.97664 117.859 10.0679C117.855 10.0799 117.85 10.0886 117.846 10.1011C117.84 10.1136 117.834 10.1243 117.83 10.1356C117.825 10.1479 117.82 10.1583 117.815 10.1706L117.71 10.4088C117.699 10.4328 117.69 10.4543 117.679 10.4783C117.597 10.6586 117.519 10.8408 117.439 11.0225L117.319 11.2952C117.308 11.3184 117.299 11.3404 117.289 11.3632C117.279 11.3856 117.269 11.4076 117.259 11.4308L116.929 12.1801C116.919 12.2033 116.91 12.2243 116.899 12.2478L116.718 12.6579C116.696 12.7036 116.68 12.7481 116.659 12.7939C116.623 12.8682 116.573 12.987 116.538 13.0665L116.419 13.3379C116.399 13.3839 116.378 13.4293 116.359 13.4751C116.301 13.6123 116.236 13.7464 116.178 13.8834L115.968 14.3597C115.958 14.3835 115.948 14.405 115.938 14.4274C115.91 14.4908 115.876 14.5723 115.848 14.6326L115.788 14.7681C115.74 14.8828 115.687 14.996 115.637 15.1104C115.568 15.2691 115.496 15.426 115.428 15.585C115.35 15.7679 115.264 15.9475 115.187 16.1308C115.178 16.1537 115.166 16.1775 115.157 16.2003C115.147 16.2238 115.137 16.2444 115.127 16.268C115.107 16.3119 115.088 16.3612 115.067 16.4037L114.977 16.6073C114.968 16.6295 114.958 16.6515 114.947 16.675C114.937 16.6998 114.927 16.7203 114.917 16.7445L114.766 17.0854C114.734 17.1626 114.7 17.2177 114.7 17.3139L114.701 17.3146V17.3144Z" fill="#E21221"/>
+        </g>
+        <defs>
+          <clipPath id="clip0_2610_4067">
+            <rect width="178" height="24" fill="white" transform="translate(0 0.5)"/>
+          </clipPath>
+        </defs>
+      </svg>
+      <div style="width:1px; height:28px; background:rgba(255,255,255,0.2);"></div>
+      <div style="display:flex; flex-direction:column; gap:1px;">
+        <span style="font-family:'Syne',sans-serif; font-weight:700; font-size:13px; color:#ffffff; letter-spacing:0.3px; line-height:1;">CUET University</span>
+        <span style="font-family:'DM Sans',sans-serif; font-weight:400; font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:0.8px; text-transform:uppercase; line-height:1;">Intelligence Dashboard</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchPage('universities')">🏛 Universities</button>
+      <button class="tab" onclick="switchPage('faqs')">❓ FAQs</button>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════ UNIVERSITY PAGE ════════════════════════════ -->
+<div id="page-universities" class="page active">
+<div class="container">
+
+  <!-- Filters -->
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label>🔍 Search Course</label>
+      <input type="text" id="searchCourse" placeholder="e.g. B.A. Hindi, B.Sc. Physics..." oninput="applyFilters()">
+    </div>
+    <div class="filter-group">
+      <label>🏛 University</label>
+      <select id="filterUni" onchange="applyFilters()">
+        <option value="">All Universities</option>
+        <option value="JNU">JNU – Jawaharlal Nehru University</option>
+        <option value="JMI">JMI – Jamia Millia Islamia</option>
+        <option value="BHU">BHU – Banaras Hindu University</option>
+        <option value="AMU">AMU – Aligarh Muslim University</option>
+        <option value="DU">DU – University of Delhi</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🎓 Degree Type</label>
+      <select id="filterDegree" onchange="applyFilters()">
+        <option value="">All Degrees</option>
+        <option value="B.A.">B.A. (Arts)</option>
+        <option value="B.Sc.">B.Sc. (Science)</option>
+        <option value="B.Com">B.Com (Commerce)</option>
+        <option value="B.Tech">B.Tech (Technology)</option>
+        <option value="B.Voc">B.Voc (Vocational)</option>
+        <option value="Diploma">Diploma</option>
+        <option value="COP">COP (Certificate)</option>
+        <option value="Shastri">Shastri</option>
+        <option value="B.F.A">Fine Arts</option>
+        <option value="LL.B">LL.B (Law)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>📚 Subject / Domain</label>
+      <select id="filterSubject" onchange="applyFilters()">
+        <option value="">All Subjects</option>
+        <option value="English">English</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Sanskrit">Sanskrit</option>
+        <option value="Mathematics">Mathematics</option>
+        <option value="Physics">Physics</option>
+        <option value="Chemistry">Chemistry</option>
+        <option value="Biology">Biology</option>
+        <option value="History">History</option>
+        <option value="Political Science">Political Science</option>
+        <option value="Economics">Economics</option>
+        <option value="General Aptitude">General Aptitude</option>
+      </select>
+    </div>
+    <button class="btn-reset" onclick="resetFilters()">↺ Reset</button>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-chip">
+      <div class="icon" style="background:rgba(108,99,255,0.15)">🏛</div>
+      <div><div class="val" id="statUnis">5</div><div class="lbl">Universities</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="icon" style="background:rgba(67,233,123,0.15)">📖</div>
+      <div><div class="val" id="statCourses">0</div><div class="lbl">Courses</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="icon" style="background:rgba(0,198,255,0.15)">🎓</div>
+      <div><div class="val" id="statDegrees">0</div><div class="lbl">Degree Types</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="icon" style="background:rgba(247,151,30,0.15)">✅</div>
+      <div><div class="val" id="statMin">45%</div><div class="lbl">Min. Marks</div></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-grid" id="resultsGrid"></div>
+</div>
+</div>
+
+<!-- ════════════════════════════ FAQ PAGE ════════════════════════════ -->
+<div id="page-faqs" class="page">
+<div class="container">
+
+  <div class="faq-filters">
+    <div class="filter-group">
+      <label>🔍 Search FAQs</label>
+      <input type="text" id="faqSearch" placeholder="Search questions & answers..." oninput="applyFaqFilters()">
+    </div>
+    <div class="filter-group">
+      <label>📂 Category</label>
+      <select id="faqCatFilter" onchange="applyFaqFilters()">
+        <option value="">All Categories</option>
+        <option value="general">General</option>
+        <option value="eligibility">Eligibility</option>
+        <option value="cuet">CUET Exam</option>
+        <option value="admission">Admission Process</option>
+        <option value="reservation">Reservation</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🏛 Related University</label>
+      <select id="faqUniFilter" onchange="applyFaqFilters()">
+        <option value="">All Universities</option>
+        <option value="JNU">JNU</option>
+        <option value="JMI">JMI</option>
+        <option value="BHU">BHU</option>
+        <option value="AMU">AMU</option>
+        <option value="DU">DU</option>
+        <option value="general">General</option>
+      </select>
+    </div>
+    <button class="btn-reset" onclick="resetFaqFilters()">↺ Reset</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-chip">
+      <div class="icon" style="background:rgba(108,99,255,0.15)">❓</div>
+      <div><div class="val" id="faqCount">0</div><div class="lbl">Questions</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="icon" style="background:rgba(67,233,123,0.15)">📂</div>
+      <div><div class="val">5</div><div class="lbl">Categories</div></div>
+    </div>
+  </div>
+
+  <div class="faq-grid" id="faqGrid"></div>
+</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA — UNIVERSITIES
+═══════════════════════════════════════════════ */
+const courses = [
+  // ── JNU ──
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Persian", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OR Certificate of Alimiah with 45% marks from recognized Madrasas. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Pashto", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OR Certificate of Alimiah with 45% marks from recognized Madrasas. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Arabic", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OR Certificate of Alimiah with 45% marks from recognized Madrasas. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Japanese", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OR Certificate of Alimiah with 45% marks from recognized Madrasas. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Korean", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Chinese", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) French", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) German", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Russian", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.A.", course:"B.A. (Hons.) Spanish", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"B.Sc.", course:"B.Sc. Programme in Ayurveda Biology", subjects:["Sanskrit (325)","Physics (322)","Chemistry (306)","Biology (304) OR Mathematics (319)","General Aptitude (501)"], eligibility:"10+2 or equivalent with minimum 45% marks in aggregate. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Mongolian", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. 10+1 holders eligible if they completed first year of Bachelor's with 45%." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Bhasha Indonesia", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. 10+1 holders eligible if first year Bachelor's completed with 45%." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Urdu", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. 10+1 holders eligible if first year Bachelor's completed with 45%." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Pashto", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Uzbek", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Hebrew", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Pali", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks. OBC: 10% relaxation. SC/ST/PWD: irrespective of marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Sanskrit Computational Linguistics", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Yoga Philosophy", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Vedic Culture", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Sanskrit", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Natya Shastra", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Health Awareness and Wellness", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+  { uni:"JNU", uniName:"Jawaharlal Nehru University", degree:"COP", course:"COP Indian Philosophy", subjects:["English Test (101)","General Aptitude (501)"], eligibility:"10+2 or equivalent with min 45% marks." },
+
+  // ── JMI ──
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) Turkish Lang. & Literature", subjects:["General Test"], eligibility:"Senior Secondary Certificate or equivalent with not less than 50% marks in aggregate of best 5 papers or in subject concerned." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) Sanskrit", subjects:["General Test"], eligibility:"10+2 with 45% marks from a recognized Board/University." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) French & Francophone Studies", subjects:["General Test"], eligibility:"Senior Secondary Certificate or equivalent with not less than 50% marks in aggregate or in subject concerned." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) Spanish & Latin American Studies", subjects:["General Test"], eligibility:"Senior Secondary Certificate or equivalent with not less than 50% marks in aggregate or in subject concerned." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) Hindi", subjects:["Hindi"], eligibility:"Senior Secondary Certificate or equivalent with not less than 50% marks in aggregate of best 5 papers or in subject concerned." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) Urdu", subjects:["Urdu"], eligibility:"Senior Secondary Certificate or equivalent with not less than 45% marks in aggregate OR 50% marks in the subject concerned." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.A.", course:"B.A. (Hons.) Korean Language", subjects:["General Test"], eligibility:"Senior Secondary School Certificate with not less than 50% marks in aggregate of best 5 papers." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.Sc.", course:"B.Sc. (Hons.) Applied Mathematics", subjects:["Mathematics"], eligibility:"Senior Secondary Certificate or equivalent with not less than 50% marks in aggregate of Physics, Chemistry and Mathematics and in the subject concerned." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"B.Sc.", course:"B.Sc. (Multidisciplinary)", subjects:["General Test"], eligibility:"Senior Secondary Certificate or equivalent with not less than 50% marks in each science subject (Physics, Chemistry, Mathematics) and 50% in aggregate of best 5 papers." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Turkish (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary / Higher Secondary or equivalent with not less than 50% marks in aggregate of best 5 papers AND Certificate in Turkish Language or B-2 Level Timer Course." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Italian (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from recognized board/institution PLUS Certificate Course in Italian from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Russian (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from recognized board/institution PLUS Certificate Course in Russian from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Chinese Language (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from recognized board/institution PLUS Certificate Course in Chinese from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Korean Language (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from recognized board/institution PLUS Certificate Course in Korean from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Pashto (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from recognized board/institution PLUS Certificate Course in Pashto from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Uzbek (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from recognized board/institution PLUS Certificate Course in Uzbek from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Diploma in Translation Proficiency in English (Part-time)", subjects:["General Test"], eligibility:"(i) Bachelor's degree from a recognized university with not less than 45% marks in aggregate. OR (ii) Certificate in Translation Proficiency from any recognized university/institution and Senior Secondary Certificate with not less than 50% marks in aggregate of best 5 papers." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Advanced Diploma in Turkish (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary / Higher Secondary or equivalent with not less than 50% marks in aggregate of best 5 papers along with Diploma in Turkish OR Graduation in any discipline with 45% marks with Diploma in Turkish Language OR C-1 level Timer Course." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Advanced Diploma in French (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from a recognized board/institute with not less than 45% marks in aggregate of best 5 papers PLUS Diploma Course in French from a University or recognized institution." },
+  { uni:"JMI", uniName:"Jamia Millia Islamia", degree:"Diploma", course:"Advanced Diploma in Pashto (Part-time)", subjects:["General Test"], eligibility:"Senior Secondary School Certificate or equivalent from a recognized board/institute with not less than 45% marks in aggregate of best 5 papers PLUS Diploma Course in Pashto from a University or recognized institution." },
+
+  // ── BHU ──
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.A.", course:"B.A. (Hons.) – Economics / History / Political Science / Sociology / Psychology / Geography / Arabic / Bengali / Hindi / Persian / Pali / Sanskrit / Urdu / English / Japanese / Chinese / German / French / AHIC & Archaeology / History of Art / Philosophy / Linguistics / Home Science / Music / Painting / Education / Dance", subjects:["English (101) OR Hindi (102)","General Aptitude (501)"], eligibility:"10+2 or equivalent with minimum 50% marks in aggregate. For Economics Major, Mathematics must be studied at High School. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"LL.B", course:"B.A. (Hons.) LL.B.", subjects:["English (101) OR Hindi (102)","General Aptitude (501)"], eligibility:"10+2 or equivalent from a recognized Board. Min 50% for General; 45% for OBC; 40% for SC/ST. Open university 10+2 without basic qualification is NOT eligible." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Com", course:"B.Com (Hons.) / B.Com (Hons.) Financial Market Management", subjects:["Accountancy/Book Keeping (301)","Business Studies (305)","General Aptitude (501)"], eligibility:"10+2 or equivalent with Commerce / Economics / Maths / Computer Science / Finance as one of the subjects with minimum 50% marks in aggregate. Must have passed in the concerned subject. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Sc.", course:"B.Sc. (Hons.) Agriculture", subjects:["Chemistry (306) + Mathematics (319) + Physics (322)","OR Biology (304) + Chemistry (306) + Physics (322)","OR Agriculture (302) + Biology (304) + Chemistry (306)"], eligibility:"10+2/Intermediate in Agriculture or Science (PCM/PCB) or equivalent from recognized University. Minimum 50% marks in aggregate. AGE: 16–25 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Sc.", course:"B.Sc. (Hons.) Botany / Chemistry / Zoology / Home Science / Geography / Earth Science (Bio Group)", subjects:["Biology (304)","Physics (322)","Chemistry (306)"], eligibility:"10+2 or equivalent with minimum 50% marks in Physics, Chemistry plus any one of Biology, Geology, Geography. Must have passed in each of the three subjects. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Sc.", course:"B.Sc. (Hons.) Mathematics / Statistics / Computer Science / Physics / Chemistry / Geography / Earth Science (Maths Group)", subjects:["Chemistry (306)","Mathematics (319)","Physics (322)"], eligibility:"10+2 or equivalent with minimum 50% marks in Physics, Maths plus any one of Chemistry, Statistics, Geology, Computer Science, IT, Geography. Must have passed each subject. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Tech", course:"B.Tech in Dairy Technology", subjects:["Chemistry (306)","Mathematics (319)","Physics (322)"], eligibility:"10+2 or equivalent with Physics, Chemistry, Mathematics OR PCM + Biology with English from a recognized Board. Minimum 50% marks or equivalent GPA in aggregate. AGE: 17–25 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Tech", course:"B.Tech in Food Technology", subjects:["Chemistry (306)","Mathematics (319)","Physics (322)"], eligibility:"10+2 or equivalent with Physics, Chemistry, Mathematics OR PCM + Biology with English from a recognized Board. Minimum 50% marks or equivalent GPA in aggregate. AGE: 17–25 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Voc", course:"B.Voc in Fashion Technology & Apparel Designing", subjects:["English (101) OR Hindi (102)","General Aptitude (501)"], eligibility:"10+2 or equivalent in any stream OR Level 4 NSQF certificate or any other equivalent examination from the University. Minimum 50% marks in aggregate. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Voc", course:"B.Voc in Modern Office Management", subjects:["English (101) OR Hindi (102)","General Aptitude (501)"], eligibility:"10+2 or equivalent in any stream OR Level 4 NSQF certificate. Minimum 50% marks in aggregate. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Voc", course:"B.Voc in Food Processing & Management", subjects:["Chemistry (306) + Mathematics (319) + Physics (322)","OR Biology (304) + Chemistry (306) + Physics (322)","OR Agriculture (302) + Biology (304) + Chemistry (306)"], eligibility:"10+2/Intermediate in Science OR Level 4 NSQF certificate or equivalent. Minimum 50% marks in aggregate. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Voc", course:"B.Voc in Hospitality & Tourism Management", subjects:["English (101) OR Hindi (102)","General Aptitude (501)"], eligibility:"10+2 or equivalent in any stream OR Level 4 NSQF certificate. Minimum 50% marks in aggregate. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Voc", course:"B.Voc in Medical Lab Technology", subjects:["English (101) OR Hindi (102)","Biology/Biotechnology (304)"], eligibility:"10+2/Intermediate in Science OR Level 4 NSQF certificate or equivalent. Minimum 50% marks in aggregate. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Voc", course:"B.Voc in Retail & Logistics Management", subjects:["English (101) OR Hindi (102)","General Aptitude (501)"], eligibility:"10+2 or equivalent in any stream OR Level 4 NSQF certificate. Minimum 50% marks in aggregate. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.F.A", course:"Bachelor of Fine Arts – Applied Arts / Painting / Plastic Arts (Pottery & Ceramic)", subjects:["Fine Arts/Visual Arts/Commercial Arts (312)"], eligibility:"10+2 or equivalent exam with minimum 50% marks in aggregate. Note: Final admission merit = CUET (UG) + Practical Examination conducted by BHU. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.A.", course:"Bachelor of Performing Arts – Vocal / Instrumental / Dance", subjects:["Performing Arts (320)"], eligibility:"10+2 or equivalent with minimum 50% marks in aggregate AND minimum 55% marks in practical exam of Music/Dance. OR 10+2 (without Music) with 50% marks plus Part-time Diploma in concerned subject. Final admission = CUET + Practical Examination. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"Shastri", course:"Shastri (Hons.) – Veda / Vyakarna / Sahitya / Jyotish / Vaidik Darshan / Dharmasastra / Jain-Buddha Darshan", subjects:["Sanskrit (325)"], eligibility:"Passed Madhyama Examination of BHU/Madhyama/Uttar Madhyama/Upa Shastri/Intermediate or 10+2 or equivalent with minimum 50% marks in aggregate. Sanskrit must be one of the subjects. OR Certificate course in Sanskrit of BHU after 10+2 with 50% marks in both. AGE: Not more than 22 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Sc.", course:"B.Sc. (Hons.) Medical Technology (Radiotherapy)", subjects:["Chemistry (306) + Mathematics (319) + Physics (322)","OR Biology (304) + Chemistry (306) + Physics (322)"], eligibility:"10+2 or equivalent with minimum 50% marks in Physics, Chemistry and Mathematics/Biology. AGE: Not more than 23 years on 1st July 2025." },
+  { uni:"BHU", uniName:"Banaras Hindu University", degree:"B.Sc.", course:"B.Sc. (Hons.) Medical Radiology and Imaging Technology", subjects:["Biology (304)","Chemistry (306)","Physics (322)"], eligibility:"10+2 or equivalent with minimum 50% marks in Physics, Chemistry and Biology. AGE: Not more than 23 years on 1st July 2025." },
+
+  // ── AMU ──
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.Voc", course:"B.Voc. (Polymer & Coating Technology)", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate with Physics, Chemistry & Mathematics/Biology or equivalent with at least 45% marks in aggregate. OR Three year Diploma in Engineering or equivalent with at least 45% marks in aggregate." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.Voc", course:"B.Voc. (Fashion Design & Garment Technology)", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate Examination or equivalent with at least 45% marks in aggregate. OR Three year Diploma in Engineering or equivalent with at least 45% marks in aggregate." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Sanskrit", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Persian", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Women Studies", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Hindi", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.Sc.", course:"B.Sc. (Hons.) Community Science", subjects:["English","Physics","Chemistry","Biology/Mathematics/Home Science"], eligibility:"Senior Secondary School Certificate in Agriculture or Science (with Physics, Chemistry and Mathematics / Biology / Home Science) or equivalent with 50% marks in aggregate." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.Sc.", course:"B.Sc. (Hons.) Statistics", subjects:["English","Physics","Chemistry","Biology/Mathematics"], eligibility:"Senior Secondary School Certificate with English, Physics, Chemistry and Mathematics / Biology / Geography / Computer Science or equivalent with at least 50% marks. Note: For Statistics as Major, candidate must have passed Mathematics at qualifying exam." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.Sc.", course:"B.Sc. (Hons.) Geography", subjects:["English","Physics","Chemistry","Biology/Mathematics"], eligibility:"Senior Secondary School Certificate with English, Physics, Chemistry and Mathematics / Biology / Geography / Computer Science or equivalent with at least 50% marks in aggregate." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Philosophy", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Education", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Linguistics", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. OR Degree/Sanad from AMU recognized Institution/Madrasa with 50% marks. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Russian", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with at least 50% marks in aggregate. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) Chinese", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with at least 50% marks in aggregate. OR Bridge Course from AMU with 50% marks." },
+  { uni:"AMU", uniName:"Aligarh Muslim University", degree:"B.A.", course:"B.A. (Hons.) International Studies", subjects:["English","General Aptitude Test"], eligibility:"Senior Secondary School Certificate or equivalent with at least 50% marks in aggregate. OR Bridge Course from AMU with 50% marks." },
+
+  // ── DU ──
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Arabic", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Must appear in CUET in subjects appeared/passed in Class XII. Combination I: Any Language (List A) + 3 subjects (List B). Combination II: 2 Languages (List A) + 2 subjects (List B). Merit = best CUET score from any combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Bengali", subjects:["Bengali (List A) + Any 3 subjects (List B)","OR Bengali + 1 Language (List A) + 2 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: Bengali (List A) + 3 subjects (List B). Combination II: Bengali + 1 Language (List A) + 2 subjects (List B). Combination III/IV (General): considered only if seats remain vacant after Combinations I & II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) English", subjects:["English (List A) + Any 3 subjects (List B)","OR English + 1 Language (List A) + 2 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: English (List A) + 3 subjects (List B). Combination II: English + 1 Language (List A) + 2 subjects (List B). Merit = best CUET score from any combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) French", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score from Combination I or II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Italian", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score from Combination I or II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Persian", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score from Combination I or II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) German", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score from Combination I or II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Hindi", subjects:["Hindi (List A) + Any 3 subjects (List B)","OR Hindi (List A) + Section III (General Aptitude Test)"], eligibility:"10+2 or equivalent. Combination I: Hindi + 3 subjects from List B. Combination II: Hindi + General Aptitude Test (Section III). Note: Weightage of CUET Sections is not the same — appropriate proration will be done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Punjabi", subjects:["Punjabi (List A) + Any 3 subjects (List B)","OR Punjabi + 1 Language (List A) + 2 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: Punjabi (List A) + 3 subjects (List B). Combination II: Punjabi + Language (List A) + 2 subjects (List B). Candidates of Combination III/IV considered only if seats remain vacant." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Russian", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score from Combination I or II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Sanskrit", subjects:["Language (List A) + Sanskrit (List A) + 2 subjects (List B)","OR Sanskrit (List A) + 3 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: Language + Sanskrit (List A) + 2 subjects (List B). Combination II: Sanskrit + 3 subjects. Combination III/IV (General) considered only if seats remain vacant after Combinations I & II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Spanish", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score from Combination I or II." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Urdu", subjects:["Urdu (List A) + Any 3 subjects (List B)","OR Urdu + 1 Language (List A) + 2 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: Urdu (List A) + 3 subjects (List B). Combination II: Urdu + Language (List A) + 2 subjects (List B). Combination III/IV (General) considered only if seats remain vacant." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Applied Psychology", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + 2 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: Language (List A) + Mathematics/Applied Mathematics + 2 subjects from List B. Merit = best CUET score obtained." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Psychology", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Economics", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII. Merit = best CUET score." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Geography", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) History", subjects:["Hindi (List A) + Any 3 subjects (List B)","OR Hindi (List A) + Section III (General Aptitude)"], eligibility:"10+2 or equivalent. Combination I: Hindi + 3 subjects (List B). Combination II: Hindi + General Aptitude (Section III). Note: Weightage of CUET Sections differs — proration will be done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Humanities and Social Sciences", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Journalism", subjects:["English (List A) + Any 3 subjects (List B)","OR English + Section III (General Aptitude)"], eligibility:"10+2 or equivalent. Combination I: English + 3 subjects (List B). Combination II: English + General Aptitude (Section III). Note: Weightage differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Hindi Patrakarita", subjects:["Any Language (List A) + Mass Media/Mass Communication + Section III","OR Any Language (List A) + Section III"], eligibility:"10+2 or equivalent. Combination I: Language + Mass Media + General Aptitude. Combination II: Language + General Aptitude. Note: Weightage of CUET Sections differs — proration will be done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) MultiMedia and Mass Communication", subjects:["Any Language (List A) + 1 subject (List B) + Section III (General Aptitude)"], eligibility:"10+2 or equivalent. Appear in CUET: Language (List A) + 1 subject (List B) + Section III (General Aptitude Test). Merit = CUET score obtained from this combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Philosophy", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Political Science", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Social Work", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)","OR Language (List A) + 1 subject (List B) + Section III"], eligibility:"10+2 or equivalent. Combination I: Language + 3 subjects. Combination II: 2 Languages + 2 subjects. Combination III: Language + 1 subject + General Aptitude. Note: Weightage differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"Five Year Integrated Program in Journalism", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)","OR Language (List A) + 1 subject (List B) + Section III"], eligibility:"10+2 or equivalent. Combination I: Language + 3 subjects. Combination II: 2 Languages + 2 subjects. Combination III: Language + 1 subject + General Aptitude. Note: Weightage differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Sociology", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)"], eligibility:"10+2 or equivalent. Appear in CUET in subjects appeared/passed in Class XII." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Program)", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)","OR Language (List A) + 1 subject (List B) + Section III"], eligibility:"10+2 or equivalent. B.A. Program where Mathematics/Statistics/Computer Applications is one of the two core disciplines, Mathematics must be studied and passed in Class XII. For Language as a discipline, working knowledge required." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Anthropology", subjects:["Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Biological Sciences", subjects:["Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Biomedical Science", subjects:["Chemistry + Biology/Biotechnology/Biochemistry + Physics","OR Chemistry + Biology/Biotechnology/Biochemistry + Mathematics/Applied Mathematics"], eligibility:"10+2 or equivalent. Combination I: Chemistry + Biology + Physics. Combination II: Chemistry + Biology + Mathematics. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) BioChemistry", subjects:["Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Botany", subjects:["Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Chemistry", subjects:["Physics + Chemistry + Biology/Biotechnology/Biochemistry","OR Physics + Chemistry + Mathematics/Applied Mathematics"], eligibility:"10+2 or equivalent. Combination I: Physics + Chemistry + Biology. Combination II: Physics + Chemistry + Mathematics. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Computer Science", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry","OR Physics + Mathematics/Applied Mathematics + Computer Science/Informatics Practices"], eligibility:"10+2 or equivalent. Combination I: Physics + Maths + Chemistry. Combination II: Physics + Maths + Computer Science/Informatics Practices. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Electronics", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry","OR Physics + Mathematics/Applied Mathematics + Computer Science/Informatics Practices"], eligibility:"10+2 or equivalent. Combination I: Physics + Maths + Chemistry. Combination II: Physics + Maths + Computer Science/Informatics Practices. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Environmental Science", subjects:["Physics + Chemistry + Mathematics/Applied Mathematics","OR Physics + Chemistry + Geography/Geology","OR Physics + Chemistry + Biology/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. Three combinations accepted: PCM, PCGeo, or PCB. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Food Technology", subjects:["Biology/Biotechnology/Biochemistry + Physics + Any 1 subject (List B)","OR Biology/Biotechnology/Biochemistry + Chemistry + Any 1 subject (List B)"], eligibility:"10+2 or equivalent. Combination I: Biology + Physics + 1 subject. Combination II: Biology + Chemistry + 1 subject. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Geology", subjects:["Physics + Chemistry + Mathematics/Applied Mathematics","OR Physics + Chemistry + Computer Science/Informatics Practices"], eligibility:"10+2 or equivalent. Combination I: Physics + Maths + Chemistry. Combination II: Physics + Maths + Computer Science/Informatics Practices. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Home Science", subjects:["Physics + Chemistry + Biology/Biotechnology/Biochemistry","OR Physics + Chemistry + Mathematics/Applied Mathematics"], eligibility:"10+2 or equivalent. Combination I: Physics + Chemistry + Biology. Combination II: Physics + Chemistry + Mathematics. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Instrumentation", subjects:["Physics + Chemistry + Mathematics/Applied Mathematics","OR Physics + Chemistry + Biology/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. Two combinations accepted: PCM or PCB. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Mathematics", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + 2 subjects (List B)","OR 2 Languages (List A) + Mathematics + 1 subject (List B)"], eligibility:"10+2 or equivalent. Combination I: Language + Mathematics + 2 subjects (List B). Combination II: 2 Languages + Mathematics + 1 subject. Merit = best CUET score." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Microbiology", subjects:["Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Physics", subjects:["Physics + Chemistry + Mathematics/Applied Mathematics"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Mathematics/Applied Mathematics. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Polymer Science", subjects:["Physics + Chemistry + Mathematics/Applied Mathematics"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Mathematics. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Statistics", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + 2 subjects (List B)","OR 2 Languages (List A) + Mathematics + 1 subject (List B)"], eligibility:"10+2 or equivalent. Combination I: Language + Mathematics + 2 subjects (List B). Combination II: 2 Languages + Mathematics + 1 subject. Merit = best CUET score." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Hons.) Zoology", subjects:["Chemistry + Physics + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Chemistry + Physics + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Pass) Home Science", subjects:["Chemistry + Physics + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Chemistry + Physics + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Applied Life Science", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + Section III (General Aptitude)"], eligibility:"10+2 or equivalent. CUET: Language + Mathematics + Section III (General Aptitude Test). Merit = CUET score from this combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Applied Physical Sciences – Analytical Methods in Chemistry & Biochemistry", subjects:["Physics + Chemistry + Biology/Biological Studies/Biotechnology/Biochemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Chemistry + Biology/Biotechnology/Biochemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Applied Physical Sciences – Industrial Chemistry", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Mathematics + Chemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Life Science", subjects:["Any Language (List A) + 3 subjects (List B)","OR 2 Languages (List A) + 2 subjects (List B)","OR Language (List A) + 1 subject (List B) + Section III"], eligibility:"10+2 or equivalent. Combination I: Language + 3 subjects. Combination II: 2 Languages + 2 subjects. Combination III: Language + 1 subject + General Aptitude. Note: Weightage differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Mathematical Sciences", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + 2 subjects (List B)","OR 2 Languages (List A) + Mathematics + 1 subject (List B)"], eligibility:"10+2 or equivalent. Combination I: Language + Mathematics + 2 subjects (List B). Combination II: 2 Languages + Mathematics + 1 subject. Merit = best CUET score." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Physical Science – Computer Science/Informatics Practices", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Mathematics + Chemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Physical Science – Chemistry", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Mathematics + Chemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. (Prog.) Physical Science – Electronics", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry"], eligibility:"10+2 or equivalent. CUET: Physics + Mathematics + Chemistry. Must appear in any one Language from List A in CUET." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Sc.", course:"B.Sc. Physical Education, Health Education and Sports (PE, HE & S)", subjects:["Any Language (List A) + Physical Education (List B) + 2 subjects (List B)","OR 2 Languages (List A) + Physical Education + 1 subject","OR Language + 3 subjects (List B)","+ Performance-Based Test"], eligibility:"10+2 or equivalent. Candidates must appear in CUET AND Performance-Based Test. Merit = CUET score (50%) + Performance-based test score (50%)." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Com", course:"B.Com (Hons.)", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + 2 subjects (List B)","OR Language (List A) + Accountancy/Book Keeping + 2 subjects (List B)"], eligibility:"10+2 or equivalent. Combination I: Language + Mathematics + 2 subjects. Combination II: Language + Accountancy + 2 subjects. Merit = best CUET score." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Com", course:"B.Com.", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages (List A) + Any 2 subjects (List B)","OR Language + 1 subject (List B) + Section III"], eligibility:"10+2 or equivalent. Three combinations. Note: Weightage of CUET Sections differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) Business Economics (BBE)", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + Section III (General Aptitude)"], eligibility:"10+2 or equivalent. CUET: Language + Mathematics + Section III (General Aptitude Test). Merit = CUET score from this combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"Bachelor of Management Studies (BMS)", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + Section III"], eligibility:"10+2 or equivalent. CUET: Language + Mathematics + Section III (General Aptitude). Merit = CUET score from this combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"BBA – Financial Investment Analysis (BBA-FIA)", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + Section III"], eligibility:"10+2 or equivalent. CUET: Language + Mathematics + Section III (General Aptitude). Merit = CUET score from this combination." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Voc", course:"B.Voc. Banking Operations", subjects:["Any Language (List A) + 3 subjects (List B)","OR 2 Languages (List A) + 2 subjects","OR Language + 1 subject + Section III"], eligibility:"10+2 or equivalent. Three combinations. Note: Weightage of CUET Sections differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Voc", course:"B.Voc. Healthcare Management", subjects:["Any Language (List A) + 3 subjects (List B)","OR 2 Languages (List A) + 2 subjects","OR Language + 1 subject + Section III"], eligibility:"10+2 or equivalent. Three combinations. Note: Weightage of CUET Sections differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Voc", course:"B.Voc. Retail Management and IT", subjects:["Any Language (List A) + Mathematics/Applied Mathematics + 2 subjects (List B)","OR 2 Languages + Mathematics + 1 subject","OR Language + Mathematics + Section III"], eligibility:"10+2 or equivalent. Three combinations. Note: Weightage of CUET Sections differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Voc", course:"B.Voc. Software Development", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages + 2 subjects","OR Language + 1 subject + Section III"], eligibility:"10+2 or equivalent. Three combinations. Note: Weightage of CUET Sections differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. Vocational Studies", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages + 2 subjects","OR Language + 1 subject + Section III"], eligibility:"10+2 or equivalent. Three combinations. Note: Weightage of CUET Sections differs — proration done." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) in Music – Vocal/Instrumental", subjects:["Any Language (List A) + Performing Arts (List B) + 2 subjects","OR 2 Languages + Performing Arts + 1 subject","OR Language + 3 subjects","+ Performance-Based Test"], eligibility:"10+2 or equivalent. Candidates must appear in CUET AND Performance-Based Test. Merit = CUET score (50%) + Performance-based test score (50%)." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) in Hindustani Music – Percussion (Tabla/Pakhawaj)", subjects:["Any Language (List A) + Performing Arts (List B) + 2 subjects","OR 2 Languages + Performing Arts + 1 subject","+ Performance-Based Test"], eligibility:"10+2 or equivalent. Candidates must appear in CUET AND Performance-Based Test. Merit = CUET score (50%) + Performance-based test score (50%)." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"B.A. (Hons.) in Karnatak Music – Vocal/Instrumental", subjects:["Any Language (List A) + Performing Arts (List B) + 2 subjects","OR 2 Languages + Performing Arts + 1 subject","+ Performance-Based Test"], eligibility:"10+2 or equivalent. Candidates must appear in CUET AND Performance-Based Test. Merit = CUET score (50%) + Performance-based test score (50%)." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.A.", course:"Bachelor of Elementary Education", subjects:["Any Language (List A) + Any 3 subjects (List B)","OR 2 Languages + 2 subjects"], eligibility:"10+2 or equivalent. Combination I: Language + 3 subjects. Combination II: 2 Languages + 2 subjects. Merit = best CUET score." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.F.A", course:"Bachelor of Fine Arts", subjects:["Any Language (List A) + General Aptitude Test (Section III)","+ Practical-Based Test (College of Art)"], eligibility:"10+2 or equivalent. Candidates must appear in CUET (Language + General Aptitude) AND Practical-Based Test conducted by College of Art. Merit = CUET (50%) + Practical (50%). For Art History specialization: Analysis/Premise/Critique. Other specializations: Drawing + relevant Specialization (50:50)." },
+  { uni:"DU", uniName:"University of Delhi", degree:"B.Tech", course:"B.Tech Information Technology and Mathematical Innovations (IT & MI)", subjects:["Physics + Mathematics/Applied Mathematics + Chemistry","OR Physics + Mathematics/Applied Mathematics + Computer Science/Informatics Practices"], eligibility:"10+2 or equivalent. Combination I: Physics + Maths + Chemistry. Combination II: Physics + Maths + Computer Science/Informatics Practices. Must appear in any one Language from List A in CUET." },
+];
+
+/* ═══════════════════════════════════════════════
+   DATA — FAQs
+═══════════════════════════════════════════════ */
+const faqs = [
+  // GENERAL
+  { q:"What is CUET (UG) 2025?", a:"CUET (UG) stands for Common University Entrance Test for Undergraduate admissions. It is a centralized entrance exam conducted by NTA (National Testing Agency) for admission to undergraduate programmes in central universities across India, including JNU, JMI, BHU, AMU, and DU for the academic session 2025-26.", cat:"general", uni:"general" },
+  { q:"Which universities accept CUET (UG) 2025 scores?", a:"All central universities are mandatorily required to use CUET (UG) scores for UG admissions. This includes JNU, JMI (Jamia Millia Islamia), BHU (Banaras Hindu University), AMU (Aligarh Muslim University), DU (University of Delhi), and many more. State universities may also participate.", cat:"general", uni:"general" },
+  { q:"What is the medium of CUET (UG) 2025 exam?", a:"CUET (UG) 2025 is available in 13 languages: English, Hindi, Assamese, Bengali, Gujarati, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu, and Urdu. Candidates can choose their preferred medium at the time of application.", cat:"cuet", uni:"general" },
+  { q:"What are the three sections of CUET (UG)?", a:"CUET (UG) has three sections: Section IA & IB (Languages) — 13 languages in Section IA and 19 languages in Section IB; Section II (Domain-Specific Subjects) — 27 domain subjects aligned with Class XII subjects; Section III (General Aptitude Test) — tests quantitative reasoning, logical and analytical reasoning, general mental ability, and numerical ability.", cat:"cuet", uni:"general" },
+  { q:"What is the pattern/duration of CUET (UG) 2025 test?", a:"Each Language and Domain Subject test is of 45 minutes duration. The General Aptitude Test (Section III) is also 45 minutes. Questions are MCQ-based (Multiple Choice Questions). The marking scheme is typically +5 for correct answer, -1 for incorrect answer.", cat:"cuet", uni:"general" },
+  { q:"Can a candidate appear in multiple subjects in CUET?", a:"Yes. Candidates can appear in multiple domain subjects and language tests. However, the combination of subjects must match the eligibility requirement of the university and course they are applying to. Most universities specify a mandatory combination of 3-4 subjects.", cat:"cuet", uni:"general" },
+  { q:"What is the application fee for CUET (UG) 2025?", a:"The application fee varies by category and number of subjects opted. General category candidates pay ₹650 for up to 3 subjects. OBC-NCL/EWS candidates pay ₹600. SC/ST/PwD/Third Gender candidates pay ₹550. Additional subjects beyond 3 may attract extra charges.", cat:"general", uni:"general" },
+  { q:"What is the registration process for CUET (UG) 2025?", a:"Candidates must register online at the NTA CUET official portal (cuet.nta.nic.in). The steps include: (1) Register with basic details and get an Application Number, (2) Fill in academic and personal details, (3) Choose subjects/tests, (4) Upload documents (photo, signature), (5) Pay application fee online, (6) Download and save the confirmation page.", cat:"admission", uni:"general" },
+
+  // ELIGIBILITY
+  { q:"What is the minimum marks required in Class 12 for CUET-based admissions?", a:"It varies by university and course. JNU requires a minimum of 45% marks in 10+2. JMI requires 45%–50% depending on the course. BHU requires a minimum of 50% marks in aggregate for most UG programmes. AMU requires 45%–50% depending on the course. DU does not prescribe a minimum percentage for CUET-based admissions — CUET score is the merit basis.", cat:"eligibility", uni:"general" },
+  { q:"Are Class 12 appearing candidates eligible to apply for CUET 2025?", a:"Yes. Candidates who are currently appearing in their Class 12 board exams in 2025 are eligible to apply for CUET (UG) 2025. However, admission will be subject to passing the qualifying examination with the required minimum marks as per the specific university's criteria.", cat:"eligibility", uni:"general" },
+  { q:"Is there an age limit for CUET (UG) 2025?", a:"NTA has not prescribed any age limit for appearing in CUET (UG) 2025. However, individual universities may have their own age restrictions. For example, BHU specifies age limits for various courses: Not more than 22 years for most UG programmes (on 1st July 2025), 16-25 years for B.Sc. (Hons.) Agriculture, and 17-25 years for B.Tech courses.", cat:"eligibility", uni:"BHU" },
+  { q:"What is the minimum eligibility for JNU undergraduate programmes?", a:"For most UG programmes at JNU, candidates must have passed Senior School Certificate (10+2) or equivalent with a minimum of 45% marks in aggregate. SC/ST and PwD candidates are eligible irrespective of percentage. OBC (Non-Creamy Layer) candidates get a 10% relaxation in minimum marks. Candidates with 10+1 pattern are eligible if they completed First Year of Bachelor's degree with 45% marks.", cat:"eligibility", uni:"JNU" },
+  { q:"What is the eligibility for JMI undergraduate admissions?", a:"For most UG programmes at JMI, candidates need Senior Secondary Certificate or equivalent with not less than 50% marks in aggregate of best 5 papers or in the subject concerned. B.A. (Hons.) Sanskrit requires only 45% marks. B.A. (Hons.) Urdu requires 45% in aggregate OR 50% in the subject concerned. Diploma programmes additionally require a Certificate Course in the concerned language.", cat:"eligibility", uni:"JMI" },
+  { q:"What is the minimum eligibility for AMU undergraduate admissions?", a:"For most B.A. (Hons.) programmes at AMU, candidates must have Senior Secondary School Certificate or equivalent with not less than 50% marks in aggregate. Alternatively, candidates with Degree/Sanad from AMU recognized Institution/Madrasa with at least 50% marks are also eligible. B.Voc programmes at AMU require 45% marks.", cat:"eligibility", uni:"AMU" },
+  { q:"Does University of Delhi (DU) have a minimum percentage requirement for CUET admissions?", a:"DU does not specify a minimum percentage cutoff for CUET-based admissions at the university level. Admission is purely based on CUET scores in the specified subject combinations. However, candidates must have passed 10+2 or equivalent examination from a recognized board. The merit list is prepared based on best CUET score obtained from any of the specified subject combinations.", cat:"eligibility", uni:"DU" },
+  { q:"Are Madrasa certificate holders eligible for JNU admissions?", a:"Yes. JNU accepts Certificate of Alimiah with at least 45% marks issued by a specific list of recognized Madrasas including Darul Uloom Deoband, Mazahirul Uloom Saharanpur, Nadwatul Ulema Lucknow, and 25+ others. Candidates must also have passed English language at the level of Senior Secondary from a recognized Board. A Certificate of Maulvi from Bihar Board of Madrasa Education and Certificate of Senior Secondary from Urdu Education Board, New Delhi are also accepted.", cat:"eligibility", uni:"JNU" },
+  { q:"Can 10+1 pattern candidates apply for JNU admissions?", a:"Yes. Candidates who have obtained their Higher Secondary Certificate under the 10+1 pattern of education will be eligible for admission to B.A. programmes at JNU if they have successfully completed the First-Year of Bachelor's degree examination of a University under 10+1+3 pattern with the prescribed percentage of marks (i.e., 45%).", cat:"eligibility", uni:"JNU" },
+
+  // CUET EXAM SPECIFICS
+  { q:"What is List A and List B in DU's CUET subject combinations?", a:"List A contains 14 Languages: English, Hindi, Assamese, Bengali, Gujarati, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu, Urdu, Sanskrit. List B contains 22 Domain Subjects: Accountancy/Book Keeping, Agriculture, Anthropology, Biology/Biotechnology/Biochemistry, Business Studies, Chemistry, Environmental Science, Computer Science/Information Practices, Economics/Business Economics, Fine Arts, Geography/Geology, History, Home Science, Knowledge Tradition-Practices in India, Mass Media/Mass Communication, Mathematics/Applied Mathematics, Performing Arts, Physical Education, Physics, Political Science, Psychology, Sociology.", cat:"cuet", uni:"DU" },
+  { q:"What is Section III (General Aptitude Test) in CUET?", a:"Section III is the General Aptitude Test of CUET (UG). It tests general mental ability, quantitative reasoning, numerical ability, logical and analytical reasoning, and general awareness. Some DU programmes (like B.A. Hindi, B.A. Journalism, BMS, BBA-FIA, B.Sc. Applied Life Science) use Section III as part of their required subject combination. Note: The weightage of CUET Sections is not the same, so appropriate proration is done by universities using this section.", cat:"cuet", uni:"general" },
+  { q:"What does 'Performance-Based Test' mean for DU admissions?", a:"For certain DU programmes like B.Sc. Physical Education (PE, HE & S), B.A. (Hons.) in Music, Hindustani Music, and Karnatak Music, candidates must appear in both CUET AND a Performance-Based Test conducted by DU. The final merit is calculated as: CUET score (50% weightage) + Performance-based test score (50% weightage). The Performance-Based Test for PE involves physical performance; for Music, it involves musical performance in the relevant instrument or vocal.", cat:"cuet", uni:"DU" },
+  { q:"What is the 'Practical-Based Test' for DU's Bachelor of Fine Arts?", a:"For the Bachelor of Fine Arts at DU, candidates must appear in CUET (Language from List A + General Aptitude Test/Section III) AND a Practical-Based Test conducted by College of Art. For specialization in Art History, the practical test is based on Analysis/Premise and View/Critique. For all other five specializations, it is based on Drawing and relevant Specialization. Merit = CUET score (50%) + Practical-based test score (50%).", cat:"cuet", uni:"DU" },
+  { q:"What subjects are mandatory for JNU's B.Sc. Ayurveda Biology programme?", a:"For B.Sc. Programme in Ayurveda Biology at JNU, candidates must appear for: Sanskrit Test (Paper Code 325) — COMPULSORY, Physics (Paper Code 322) — COMPULSORY, Chemistry (Paper Code 306) — COMPULSORY, General Aptitude Test (Paper Code 501) — COMPULSORY, and either Biology (Paper Code 304) OR Mathematics (Paper Code 319) as the 5th subject (optional). If a candidate appears in both Biology and Mathematics, the subject with higher marks will be used for merit.", cat:"cuet", uni:"JNU" },
+  { q:"How does BHU calculate merit for CUET admissions?", a:"BHU uses CUET scores for merit-based admissions. For B.A. (Hons.) programmes, candidates must appear in Language Test (English 101 or Hindi 102) + General Aptitude Test (501). For Science programmes, specific subject combinations like Chemistry + Mathematics + Physics or Biology + Chemistry + Physics are required. For performing arts programmes, CUET score is combined with Practical Examination scores conducted at BHU campus.", cat:"cuet", uni:"BHU" },
+  { q:"What is the mandatory CUET subject rule for DU candidates?", a:"It is mandatory for DU candidates to appear in CUET (UG) 2025 in those subjects in which they are appearing or have passed in Class XII. This means candidates cannot appear in subjects in CUET that they haven't studied in Class XII. Merit is based on the best CUET score obtained from any of the specified subject combinations for the course applied to.", cat:"cuet", uni:"DU" },
+
+  // ADMISSION PROCESS
+  { q:"How does the seat allocation work after CUET results?", a:"After CUET results are declared, universities release their separate merit lists or cut-offs based on CUET scores in the specified subject combinations. Candidates who meet the cutoff apply to specific colleges/departments. Universities then release multiple rounds of seat allotment (typically Round 1, Round 2, Spot Round). Candidates must accept allotted seats within the specified deadline and complete the admission formalities including document verification and fee payment.", cat:"admission", uni:"general" },
+  { q:"Can a candidate apply to multiple universities through CUET?", a:"Yes. CUET (UG) is a single exam for multiple universities. One CUET score can be used to apply to multiple central universities simultaneously. After results, candidates must separately apply to each university/college they wish to seek admission in, using their CUET scores, within the university's specified application window.", cat:"admission", uni:"general" },
+  { q:"What documents are required for CUET-based admissions?", a:"Generally required documents include: (1) Class 10 marksheet/certificate for date of birth proof, (2) Class 12 marksheet/pass certificate or admit card if appearing, (3) CUET scorecard, (4) Category certificate (OBC-NCL/SC/ST/EWS/PwD) if applicable, (5) Photo ID proof (Aadhaar, Passport, etc.), (6) Passport-size photographs, (7) Migration certificate (if applicable), (8) Income certificate for OBC-NCL category.", cat:"admission", uni:"general" },
+  { q:"When will CUET (UG) 2025 exam be conducted?", a:"CUET (UG) 2025 is expected to be conducted between May and June 2025 (exact dates announced by NTA). Candidates should regularly check the official NTA website (nta.ac.in) and CUET official portal (cuet.nta.nic.in) for exact dates, admit card release, and result declaration schedules.", cat:"admission", uni:"general" },
+  { q:"Is there a normalization process for CUET scores?", a:"Yes. Since CUET is conducted across multiple shifts and dates, NTA applies a normalization procedure to ensure fairness across different question paper sets. The normalized scores (percentile scores) are used for merit/ranking purposes. This means the raw marks may be adjusted through statistical normalization to account for difficulty variations across sessions.", cat:"admission", uni:"general" },
+
+  // RESERVATION
+  { q:"What are the reservation norms for central universities under CUET?", a:"Central universities follow Government of India reservation norms: SC — 15% of seats, ST — 7.5% of seats, OBC-NCL (Non-Creamy Layer) — 27% of seats, EWS (Economically Weaker Section) — 10% of seats, PwD (Persons with Disability) — 5% horizontal reservation across all categories.", cat:"reservation", uni:"general" },
+  { q:"What relaxation in marks do OBC candidates get for JNU admissions?", a:"OBC (Non-Creamy Layer) candidates at JNU are eligible for 10% relaxation in the percentage of marks in the qualifying examination in relation to the open category. So if the minimum is 45% for general category, OBC-NCL candidates need only 35% (i.e., 10% less than the prescribed minimum).", cat:"reservation", uni:"JNU" },
+  { q:"What is the admission relaxation for SC/ST and PwD candidates?", a:"At JNU, SC/ST and PwD candidates who have passed the qualifying examination are eligible to appear in the Entrance Examination irrespective of their percentage of marks in the qualifying examination. At BHU, SC/ST candidates get 40% minimum qualifying marks (compared to 50% for General and 45% for OBC) for LL.B. programme. At AMU and DU, similar relaxation norms apply as per Government of India guidelines.", cat:"reservation", uni:"general" },
+  { q:"What is the EWS (Economically Weaker Section) category in CUET admissions?", a:"EWS category was introduced to provide 10% reservation to economically weaker sections of the General (Unreserved) category whose family income is less than ₹8 lakh per annum and who do not belong to SC/ST/OBC category. EWS candidates must produce an income and asset certificate issued by a competent authority (Tehsildar/SDM/DM) to avail this reservation.", cat:"reservation", uni:"general" },
+  { q:"Is there a supernumerary/additional seat provision for any category?", a:"JNU has an 80% seats rule: 80% of seats in B.A. (Hons.) programmes in the School of Languages are earmarked for candidates who have passed Senior School Certificate in 2024 or are due to appear in 2025. The remaining 20% are open to all other candidates. Some universities also provide supernumerary seats for NRI/foreign national candidates, Kashmiri migrants, sports quota, etc.", cat:"reservation", uni:"JNU" },
+];
+
+/* ═══════════════════════════════════════════════
+   RENDERING — UNIVERSITIES
+═══════════════════════════════════════════════ */
+function applyFilters() {
+  const search = document.getElementById('searchCourse').value.toLowerCase();
+  const uni = document.getElementById('filterUni').value;
+  const degree = document.getElementById('filterDegree').value;
+  const subject = document.getElementById('filterSubject').value;
+
+  const filtered = courses.filter(c => {
+    const matchSearch = !search || c.course.toLowerCase().includes(search) || c.uniName.toLowerCase().includes(search);
+    const matchUni = !uni || c.uni === uni;
+    const matchDegree = !degree || c.degree.includes(degree);
+    const matchSubject = !subject || c.subjects.some(s => s.toLowerCase().includes(subject.toLowerCase())) || c.eligibility.toLowerCase().includes(subject.toLowerCase());
+    return matchSearch && matchUni && matchDegree && matchSubject;
+  });
+
+  renderCards(filtered);
+  updateStats(filtered);
+}
+
+function renderCards(data) {
+  const grid = document.getElementById('resultsGrid');
+  if (data.length === 0) {
+    grid.innerHTML = `<div class="no-results"><h3>No courses found</h3><p>Try adjusting your filters or search query.</p></div>`;
+    return;
+  }
+  grid.innerHTML = data.map((c, i) => `
+    <div class="course-card uni-${c.uni}">
+      <div class="card-header">
+        <span class="uni-badge badge-${c.uni}">${c.uni} · ${c.uniName}</span>
+        <span class="degree-type">${c.degree}</span>
+      </div>
+      <div class="course-name">${c.course}</div>
+      <div class="subject-combo">
+        <div class="combo-label">📚 Subject Combination / Domain</div>
+        <div class="combo-tags">
+          ${c.subjects.map(s => `<span class="combo-tag">${s}</span>`).join('')}
+        </div>
+      </div>
+      <div class="combo-label" style="margin-bottom:6px">✅ Eligibility Criteria</div>
+      <div class="eligibility-box" id="elig-${i}">${c.eligibility}</div>
+      <button class="expand-btn" onclick="toggleElig(${i}, this)">Show more ▾</button>
+    </div>
+  `).join('');
+}
+
+function toggleElig(i, btn) {
+  const box = document.getElementById('elig-'+i);
+  box.classList.toggle('expanded');
+  btn.textContent = box.classList.contains('expanded') ? 'Show less ▴' : 'Show more ▾';
+}
+
+function updateStats(filtered) {
+  const unis = new Set(filtered.map(c => c.uni));
+  const degrees = new Set(filtered.map(c => c.degree));
+  document.getElementById('statUnis').textContent = unis.size;
+  document.getElementById('statCourses').textContent = filtered.length;
+  document.getElementById('statDegrees').textContent = degrees.size;
+}
+
+function resetFilters() {
+  document.getElementById('searchCourse').value = '';
+  document.getElementById('filterUni').value = '';
+  document.getElementById('filterDegree').value = '';
+  document.getElementById('filterSubject').value = '';
+  applyFilters();
+}
+
+/* ═══════════════════════════════════════════════
+   RENDERING — FAQs
+═══════════════════════════════════════════════ */
+function applyFaqFilters() {
+  const search = document.getElementById('faqSearch').value.toLowerCase();
+  const cat = document.getElementById('faqCatFilter').value;
+  const uni = document.getElementById('faqUniFilter').value;
+
+  const filtered = faqs.filter(f => {
+    const matchSearch = !search || f.q.toLowerCase().includes(search) || f.a.toLowerCase().includes(search);
+    const matchCat = !cat || f.cat === cat;
+    const matchUni = !uni || f.uni === uni;
+    return matchSearch && matchCat && matchUni;
+  });
+
+  renderFaqs(filtered);
+  document.getElementById('faqCount').textContent = filtered.length;
+}
+
+const catLabels = { general:'General', eligibility:'Eligibility', cuet:'CUET Exam', admission:'Admission', reservation:'Reservation' };
+const catColors = { general:'cat-general', eligibility:'cat-eligibility', cuet:'cat-cuet', admission:'cat-admission', reservation:'cat-reservation' };
+
+function renderFaqs(data) {
+  const grid = document.getElementById('faqGrid');
+  if (data.length === 0) {
+    grid.innerHTML = `<div class="faq-no-results"><h3 style="font-family:Syne;margin-bottom:8px">No FAQs found</h3><p>Try different search terms or filters.</p></div>`;
+    return;
+  }
+  grid.innerHTML = data.map((f, i) => `
+    <div class="faq-card" id="faq-${i}">
+      <div class="faq-question" onclick="toggleFaq(${i})">
+        <div class="faq-q-text">${f.q}</div>
+        <span class="faq-cat ${catColors[f.cat]}">${catLabels[f.cat]}</span>
+        <span class="faq-chevron">⌄</span>
+      </div>
+      <div class="faq-answer">${f.a}</div>
+    </div>
+  `).join('');
+}
+
+function toggleFaq(i) {
+  document.getElementById('faq-'+i).classList.toggle('open');
+}
+
+function resetFaqFilters() {
+  document.getElementById('faqSearch').value = '';
+  document.getElementById('faqCatFilter').value = '';
+  document.getElementById('faqUniFilter').value = '';
+  applyFaqFilters();
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE SWITCH
+═══════════════════════════════════════════════ */
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* INIT */
+applyFilters();
+applyFaqFilters();
+</script>
+</body>
+</html>
